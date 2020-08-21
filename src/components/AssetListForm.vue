@@ -25,37 +25,30 @@
 
       <button @click="addBtn" class="btn big main">추가</button>
     </form>
+    {{ bankArr }}
   </div>
 </template>
 
 <script>
 import { addComma } from '@/utils/filters.js';
-// settingPage에서 값을 입력한후 MainPage들어 올때 새로고침을 해야만 반영된다.
-// 매인 페이지 들어올때 바로 값이 입력되도록 해야 한다.
+import { moneybooRef } from '@/api/firebase';
+// firebase를 사용하기 위해서 불러와야 한다.
 
 export default {
   data() {
     return {
       assetTotal: '',
-      cash: this.$store.state.cashAsset,
       bankArr: [],
+      bankTotal: [],
+      cash: '',
+      currentUID: '',
     };
   },
   created() {
-    let bank = this.$store.state.bankAsset.bank,
-      asset = this.$store.state.bankAsset.asset,
-      id = this.$store.state.bankAsset.id;
+    this.currentUID = this.$store.state.uid; // 로그인한 유저 uid
 
-    // 은행의 배열을 각각의 객체로 만드는 로직
-    for (let i = 0; i < bank.length; i++) {
-      this.bankArr.push({
-        bank: bank[i],
-        asset: asset[i],
-        id: id[i],
-      });
-    }
-
-    this.totalCalculate();
+    this.getSettingDB();
+    // this.totalCalculate();
   },
   methods: {
     addBtn() {
@@ -64,13 +57,52 @@ export default {
     makeComma(val) {
       return addComma(val);
     },
+
+    mBooRef() {
+      return moneybooRef(this.currentUID);
+    },
+    getSettingDB() {
+      this.mBooRef()
+        .doc('settings')
+        .get()
+        .then(snapShot => {
+          // console.log(snapShot.data().setAsset);
+          // data값이 있을 경우.
+          if (snapShot.exists) {
+            const setAssetList = snapShot.data().setAsset;
+            if (setAssetList) {
+              const banks = [];
+              setAssetList.banks.forEach(data => {
+                banks.push(data);
+                // this.totalCalculate(data.asset * 1);
+              });
+              this.bankArr = banks;
+
+              // this.bankArr = setAssetList.banks;
+              // console.log(this.bankArr);
+              // [{…}, {…}, {…}, {…}, __ob__: Observer]
+              // vue.js 에 구현되어 있는 ...observer를 붙여서 내부 변화를 감지하게 만들어둔 독자적인 array객체다.
+
+              this.cash = setAssetList.cashAsset;
+            }
+          } else {
+            // 값이 없을 경우
+            alert(
+              '관리 페이지에서 초기값을 입력해 주세요. 확인을 누르면 해당 페이지로 이동합니다.',
+            );
+            this.$router.push('/setting');
+          }
+        })
+        .catch(err => {
+          console.log('메인페이지 에러:', err);
+        });
+    },
     // 총 자산 계산
     totalCalculate() {
-      let assets = this.$store.state.bankAsset.asset;
-
-      let totalBank = assets.reduce((a, b) => a * 1 + b * 1);
-
-      this.assetTotal = this.cash * 1 + totalBank;
+      let assets = this.bankArr;
+      console.log(assets);
+      // this.assetTotal = this.cash * 1 + totalBank;
+      // console.log(this.bankArr);
     },
   },
 };

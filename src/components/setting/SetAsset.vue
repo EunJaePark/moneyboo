@@ -121,15 +121,8 @@
 </template>
 
 <script>
-// import {
-//   saveTotalGoal,
-//   saveCashGoal,
-//   saveCashAsset,
-//   saveBankAsset,
-//   // getBanksCookie,
-// } from '@/utils/cookies.js';
 import { makeID } from '@/utils/filters.js';
-import { moneybooRef } from '@/api/firebase';
+import { moneybooRef } from '@/api/firestore';
 
 export default {
   data() {
@@ -282,7 +275,7 @@ export default {
       this.mbooRef()
         .doc('settings')
         .onSnapshot(snapshot => {
-          console.log(snapshot.data().setAsset);
+          // console.log(snapshot.data().setAsset);
           // document의 값이 있으면
           if (snapshot.exists) {
             const setAsset = snapshot.data().setAsset;

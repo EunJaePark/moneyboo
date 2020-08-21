@@ -16,11 +16,10 @@ import {
   getCurrentRouter,
   saveAuth,
 } from '../utils/cookies.js';
-import { loginUser } from '@/api/firebase';
+import { loginUser } from '@/api/fireAuth';
 
 
 Vue.use(Vuex);
-console.log(Vuex.Store);
 
 export default new Vuex.Store({
   state: {
@@ -38,17 +37,16 @@ export default new Vuex.Store({
       icon: getCategoryCookieIcon() || [],
       id: getCategoryCookieId() || [],
     },
-    //Registration
+    // 로그인/회원가입
     email: getUserEmail() || '',
     uid: getUserUid() || '',
     nickname: getUserNickname() || '',
-    // router path
+    // 라우터
     currentRouter: getCurrentRouter() || '',
   },
   getters: {
+    // 유저가 로그인 했는지 확인
     isLogin(state) {
-      // useremail 값이 없으면? (로그인되지 않았으면)
-      // 빈문자열이 아니면 로그인 됐다라고 봄
       return state.email !== '';
     },
   },
@@ -71,11 +69,12 @@ export default new Vuex.Store({
       state.uid = '';
     },
     // 라우터 경로
-    SET_ROUTERPATH(state, router) {
+    SET_ROUTER_PATH(state, router) {
       state.currentRouter = router;
     },
   },
   actions: {
+    // 로그인
     async FATCH_LOGIN({ commit }, data) {
       const response = await loginUser(data.email, data.password);
       // state 저장

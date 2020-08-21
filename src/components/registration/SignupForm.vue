@@ -8,7 +8,20 @@
         <div :class="{ active: useremail }">
           <label for="useremail" v-if="!useremail">이메일</label>
           <input id="useremail" type="text" v-model="useremail" />
-          <!-- <button @click.prevent="emailCheck()">중복체크</button> -->
+          <!-- 이메일 유효성 검사 메세지 -->
+          <div class="logmessage-box">
+            <p v-if="useremail && !emailValidCheck">
+              이메일 형식으로 입력해주세요.
+            </p>
+            <!-- 중복체크 -->
+            <!-- <button
+              @click="emailCheck()"
+              class="font-jua"
+              v-else-if="emailValidCheck"
+            >
+              중복체크
+            </button> -->
+          </div>
         </div>
         <!-- 닉네임 -->
         <div :class="{ active: nickname }">
@@ -19,21 +32,29 @@
         <div :class="{ active: password }">
           <label for="password" v-if="!password">비밀번호</label>
           <input id="password" type="text" v-model="password" />
+          <!-- 비밀번호 유효성 검사 메세지 -->
+          <div class="logmessage-box">
+            <p v-if="password && !passwordValidCheck">
+              숫자 6자이상 입력해주세요.
+            </p>
+          </div>
         </div>
-        <strong>{{ errCode }}</strong>
-        <strong>{{ errMessage }}</strong>
-
+        <!-- 회원가입 버튼 -->
         <button
-          :class="{ active: userCompleted }"
+          :class="{ active: joinActiveBtn }"
           class="btn big signup add-btn font-jua"
+          :disabled="!userCompleted"
         >
           가입
         </button>
       </form>
+      <!-- 경고 메세지 -->
+      <p class="warning" v-if="validlogMessage">{{ validlogMessage }}</p>
       <button class="reset-btn" @click.prevent="resetBtnForm()">
         되돌아가기
       </button>
     </div>
+    <!-- 첫 화면 마스크 -->
     <a
       href=""
       class="mask mask-signup fade"
@@ -47,15 +68,10 @@
   </div>
 </template>
 <script>
-// import { auth } from '@/api/firebase';
-import {
-  auth,
-  signupUser,
-  moneybooRef,
-  userProfileUpdate,
-} from '@/api/firebase';
+import { signupUser, userProfileUpdate } from '@/api/fireAuth';
+import { moneybooRef } from '@/api/firestore';
 import { dateFormat } from '@/utils/filters';
-
+import { passwordValidation, emailValidation } from '@/utils/validation';
 import {
   clickFormEvent,
   globalMountedInSingup,
@@ -68,22 +84,31 @@ import {
 export default {
   data() {
     return {
-      // register
+      // user info
       useremail: '',
       nickname: '',
       password: '',
-      errCode: '',
-      errMessage: '',
+      // log message
+      validlogMessage: '',
     };
   },
   computed: {
     userCompleted() {
       return this.useremail && this.nickname && this.password;
     },
+    emailValidCheck() {
+      return emailValidation(this.useremail);
+    },
+    passwordValidCheck() {
+      return passwordValidation(this.password);
+    },
+    joinActiveBtn() {
+      return (
+        this.userCompleted && this.emailValidCheck && this.passwordValidCheck
+      );
+    },
   },
-  created() {
-    // 만약에 로그인한 사용자가 해당페이지로 진입할 경우 메인페이지로 돌아가도록 설정
-  },
+  created() {},
   mounted() {
     // 이벤트 함수를 담당하는 js 함수에 element를 넘겨줘서 쉽게 dom을 제어할 수 있도록 함.
     globalMountedInSingup(this.$el);
@@ -91,9 +116,9 @@ export default {
   methods: {
     // 회원가입 양식 제출
     async submitForm() {
-      // 1. 만약 유저가 있을 경우? 예외처리..
-      // 2. 중복체크
-      // 3. 유저정보 저장 방법 다르게?
+      this.validlogMessage = '';
+      // 1. 만약 유저가 있을 경우? 예외처리.. 중복체크
+      // 3. 유저정보 저장 방법 다르게? xxx
       // 4. 회원가입이 완료되고 로그인,회원가입창 리셋시키기
       // 5. 회원탈퇴? 회원 삭제하면 db에서도 사라지게 구현하자.
 
@@ -108,13 +133,16 @@ export default {
       */
 
       // 1. 이메일 중복체크,
-      // 2. 비밀번호 유효성검사
-      // 3. 중복검사
+      // 2. 비밀번호 유효성검사 vvv
       // 4. 에러처리
 
       try {
-        // 만약 입력값이 있다면
-        if (this.nickname && this.password && this.nickname) {
+        // 유저정보가 입력되고 입력 형식이 맞는다면
+        if (
+          this.userCompleted &&
+          this.emailValidCheck &&
+          this.passwordValidCheck
+        ) {
           const response = await signupUser(this.useremail, this.password);
 
           // 닉네임 등록
@@ -124,49 +152,42 @@ export default {
             createdAt: this.getDateFormat(new Date()),
             email: response.user.email,
             nickname: this.nickname,
-            loginStatus: false,
           };
 
           // user 정보 DB에 등록
           this.userInfoSetting(response.user.uid, userInfo);
 
           console.log(response);
-          alert('계정이 생성되었습니다! 로그인을 해주세요 🎉');
 
+          this.validlogMessage = '';
           this.resetUserInfo();
           initRegistForm();
+          alert('계정이 생성되었습니다! 로그인을 해주세요 🎉');
 
-          // 하나라도 입력값이 없다면
+          // 입력값이 없고 유효성이 맞지않는다면
         } else {
-          console.log('닉네임', this.nickname);
-          console.log('비밀번호', this.password);
-          console.log('이메일', this.useremail);
-          // 둘 다 입력되지 않았을때..??
-          const errTarget =
-            this.nickname === ''
-              ? '닉네임'
-              : this.password === ''
-              ? '비밀번호'
-              : '이메일';
-
-          alert(`${errTarget}이(가) 입력되지 않았습니다!`);
+          this.validlogMessage =
+            !this.emailValidCheck && !this.passwordValidCheck
+              ? '이메일과 비밀번호 형식이 맞지 않습니다.'
+              : !this.emailValidCheck
+              ? '이메일 형식이 맞지 않습니다.'
+              : '비밀번호 형식이 맞지 않습니다.';
         }
 
         // 에러처리
       } catch (err) {
-        // console.log(err);
-        alert(err.errMessage);
-        this.errCode = err.code;
-        this.errMessage = err.errMessage;
+        console.log(err);
+        this.validlogMessage =
+          err.code === 'auth/email-already-in-use'
+            ? '이미 사용 중인 이메일입니다. 다시 한번 확인해 주세요.'
+            : '';
       }
 
       //this.resetUserInfo(); // input 값 리셋
     },
     emailCheck() {
-      console.log(this.useremail);
-      auth.importUsers().then(user => {
-        console.log(user);
-      });
+      // const cred = firebaseApp.auth.EmailAuthProvider();
+      // console.log(cred);
     },
     // 회원가입 페이지 클릭 이벤트
     clickSignupForm(event) {

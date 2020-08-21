@@ -194,12 +194,12 @@
 
 /* ------ SetCategory.vue ------ */
 .set-category {
-    outline: px solid red;
+    /* outline: px solid red; */
   }
   
   /* --- 추가된 카테고리들(카테고리 수정버튼) --- */
   .set-category > .category-list-cont {
-    outline: px solid blue;
+    /* outline: px solid blue; */
   }
   .set-category > .category-list-cont:after {
     content: '';
@@ -395,7 +395,7 @@
   
   /* --- 카테고리 추가 --- */
   .set-category > .category-edit-cont {
-    outline: px solid red;
+    /* outline: px solid red; */
     margin-top: 40px;
   }
   .set-category > .category-edit-cont > strong {
@@ -431,7 +431,7 @@
     position:relative;
   }
   .set-category > .category-edit-cont > form > ul > li > label {
-    outline: px solid red;
+    /* outline: px solid red; */
   }
   .set-category > .category-edit-cont > form > ul > li > label > input {
     width: 37px;

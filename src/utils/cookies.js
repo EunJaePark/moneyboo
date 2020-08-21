@@ -1,6 +1,3 @@
-// import store from '@/store/index';
-// import { makeID } from '@/utils/filters.js';
-
 // SetAsset.vue
 function saveTotalGoal(total) {
   console.log(total);
@@ -57,6 +54,7 @@ function getUserUid() {
   );
 }
 
+// get user nickname
 function getUserNickname() {
   return document.cookie.replace(
     /(?:(?:^|.*;\s*)user_nickname\s*=\s*([^;]*).*$)|^.*$/,
@@ -76,21 +74,6 @@ function getCurrentRouter() {
 function deleteCookie(value) {
   document.cookie = `${value}=; expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
 }
-
-// //StatisticsPage > ListOfMonth
-// function checkMonthList() {
-//   return document.cookie.replace(
-//     /(?:(?:^|.*;\s*)totalGoal\s*=\s*([^;]*).*$)|^.*$/,
-//     '$1',
-//   );
-// }
-// //StatisticsPage > ListOfYear
-// function checkYearList() {
-//   return document.cookie.replace(
-//     /(?:(?:^|.*;\s*)totalGoal\s*=\s*([^;]*).*$)|^.*$/,
-//     '$1',
-//   );
-// }
 
 // store에서 사용.
 function getTotalGoal() {
@@ -246,12 +229,10 @@ export {
   getCategoryCookieName,
   getCategoryCookieIcon,
   getCategoryCookieId,
-  // deleteCookie,
   saveAuth,
   getUserEmail,
   getUserUid,
   getUserNickname,
   deleteCookie,
   getCurrentRouter,
-  // deleteListCookie,
 };

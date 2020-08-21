@@ -6,33 +6,43 @@
       <form class="form" action="" @submit.prevent="submitForm">
         <!-- 아이디 -->
         <div :class="{ active: useremail }">
-          <label for="useremail" v-if="!useremail">아이디</label>
+          <label for="useremail" v-if="!useremail">이메일</label>
           <input id="useremail" type="text" v-model="useremail" />
+          <!-- 이메일 유효성 검사 메세지 -->
+          <div class="logmessage-box">
+            <p v-if="useremail && !emailCheck">
+              가입된 이메일을 입력해주세요.
+            </p>
+          </div>
         </div>
         <!-- 비밀번호 -->
         <div :class="{ active: password }">
           <label for="password" v-if="!password">비밀번호</label>
-          <input
-            id="password"
-            type="text"
-            v-model="password"
-            @click.prevent=""
-          />
+          <input id="password" type="text" v-model="password" />
+          <!-- 비밀번호 유효성 검사 메세지 -->
+          <div class="logmessage-box">
+            <p v-if="password && !passwordCheck">
+              비밀번호를 입력해주세요.
+            </p>
+          </div>
         </div>
         <!-- 회원정보 까먹었을때 찾는 버튼 -->
-        <p><a href="" class="font-jua">비밀번호 찾기</a></p>
+        <!-- <p><a href="" class="font-jua">비밀번호 찾기</a></p> -->
         <button
+          :class="{ active: loginSuccessBtn }"
           class="btn big login add-btn font-jua"
-          :class="{ active: userCompleted }"
+          :disabled="!userCompleted"
         >
           로그인
         </button>
       </form>
+      <!-- 경고메세지 -->
+      <p class="warning">{{ errMessage }}</p>
       <button class="reset-btn" @click.prevent="resetBtnForm()">
         되돌아가기
       </button>
     </div>
-
+    <!-- 첫 화면 마스크 -->
     <a
       href=""
       class="mask mask-login fade"
@@ -54,6 +64,9 @@ import {
   outFormEvent,
   initRegistForm,
 } from '@/js/registration.js';
+import { passwordValidation, emailValidation } from '@/utils/validation';
+import { moneybooRef } from '@/api/firestore';
+import bus from '@/utils/bus';
 export default {
   data() {
     return {
@@ -61,6 +74,8 @@ export default {
       useremail: '',
       password: '',
       // event
+      errMessage: '',
+      alertMessage: '',
     };
   },
   created() {},
@@ -69,21 +84,27 @@ export default {
     globalMountedInLogin(this.$el);
   },
   computed: {
+    // user가 입력됐는지 확인
     userCompleted() {
       return this.useremail && this.password;
     },
+    // 이메일 유효성 검사
+    emailCheck() {
+      return emailValidation(this.useremail);
+    },
+    // 비밀번호 유효성 검사
+    passwordCheck() {
+      return passwordValidation(this.password);
+    },
+    // 조건이 성립하면 버튼 제출하도록 체크
+    loginSuccessBtn() {
+      return this.userCompleted && this.emailCheck && this.passwordCheck;
+    },
   },
   methods: {
-    // 1. 로그인 안했을때 에러처리
-    // 2. 회원 삭제되면 db 목록에도 삭제
-
     // 로그인 양식 제출
     async submitForm() {
-      // 1. async await문으로 작성 (완)
-      // 2. 로그인하면 gnb 화면에 유저 정보가 바로 로드 될 수 있도록 하자.. (완)
-      // 3. 만약 로그인 정보가 없을 경우의 예외처리
-      // 4. 로그인하고 다음 동작
-      // 5. 쿠키 순서 수정..(완)
+      this.errMessage = '';
 
       const userData = {
         email: this.useremail,
@@ -91,27 +112,59 @@ export default {
       };
 
       try {
-        const response = await this.$store.dispatch('FATCH_LOGIN', userData);
-        console.log(response);
-        alert('로그인되었습니다!😊');
-        this.initForm();
-        initRegistForm();
+        // 입력값, 유효성검사가 완료되면
+        if (this.userCompleted && this.emailCheck && this.passwordCheck) {
+          const response = await this.$store.dispatch('FATCH_LOGIN', userData);
+
+          console.log(response);
+          this.initForm();
+          initRegistForm();
+          this.errMessage = '';
+          // settings에 데이터 확인하고 라우터 이동
+          this.settingsRef(response.user.uid)
+            .get()
+            .then(doc => {
+              // settings에 값이 있으면?
+              if (doc.exists) {
+                bus.$emit('start:spinner');
+                setTimeout(() => {
+                  this.$router.push('/main');
+                }, 2500);
+              } else {
+                // settings에 값이 없으면?
+                bus.$emit('start:spinner');
+                setTimeout(() => {
+                  this.$router.push('/setting');
+                }, 2500);
+              }
+            });
+
+          // 유효성 검사가 맞지않으면
+        } else {
+          // 에러메세지
+          this.errMessage =
+            !this.emailCheck && !this.passwordCheck
+              ? '이메일과 비밀번호 형식이 맞지 않습니다.'
+              : !this.emailCheck
+              ? '이메일 형식이 맞지 않습니다.'
+              : '비밀번호 형식이 맞지 않습니다.';
+        }
       } catch (err) {
         console.log('로그인폼 에러다!!!', err);
+        // 에러메세지
+        this.errMessage =
+          err.code === 'auth/user-not-found'
+            ? '등록되지 않은 사용자입니다.'
+            : err.code === 'auth/wrong-password'
+            ? '비밀번호를 확인해주세요.'
+            : '';
       }
-
-      // const usersDoc = db.collection('users').doc(auth.currentUser.uid);
-      // const moneybooColl = usersDoc.collection('moneyboo').doc('userInfo');
-
-      // 로그인한 유저의 login_status를 true로 바꿔줌
-      // moneybooColl.update({
-      //   login_status: true,
-      // });
     },
     // 클릭 이벤트
     clickSignupForm(event) {
       clickFormEvent(event.target);
     },
+    // 폼 리셋
     initForm() {
       this.useremail = '';
       this.password = '';
@@ -128,6 +181,10 @@ export default {
     // 마우스 아웃 이벤트
     outLoginForm() {
       outFormEvent();
+    },
+    // settings DB
+    settingsRef(uid) {
+      return moneybooRef(uid).doc('settings');
     },
   },
 };

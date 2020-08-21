@@ -460,7 +460,7 @@
 <script>
 // import { saveCategory } from '@/utils/cookies.js';
 import { makeID } from '@/utils/filters.js';
-import { moneybooRef } from '@/api/firebase';
+import { moneybooRef } from '@/api/firestore';
 import firebase from 'firebase';
 
 export default {
@@ -576,8 +576,8 @@ export default {
       this.mbooRef()
         .doc('settings')
         .onSnapshot(snapshot => {
-          console.log(snapshot.data());
-          console.log(snapshot.data().setCategory);
+          // console.log(snapshot.data());
+          // console.log(snapshot.data().setCategory);
           // document가 존재하면
           if (snapshot.exists) {
             const setCategory = snapshot.data().setCategory;
