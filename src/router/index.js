@@ -12,8 +12,13 @@ const routes = [
   {
     path: '/registration',
     component: () => import('@/views/RegistrationPage.vue'),
+    meta: {
+      requiresAuth: false,
+    },
+    beforeEnter: (to, from, next) => {
+      store.getters.isLogin ? next('/main') : next();
+    },
   },
-
   {
     path: '/main',
     component: () => import('@/views/MainPage.vue'),
@@ -73,8 +78,9 @@ router.beforeEach((to, from, next) => {
   // 사용자가 로그인하지 않았을때
   // 로그인 페이지로 이동
   if (to.meta.requiresAuth && !store.getters.isLogin) {
-    next('/');
-
+    from.path === '/registration'
+      ? alert('로그인이 필요한 메뉴입니다.')
+      : next('/');
     return;
   }
   next();

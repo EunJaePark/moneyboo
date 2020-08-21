@@ -29,7 +29,7 @@
 
 <script>
 import { newConversionMonth } from '@/utils/filters';
-import { moneybooRef } from '@/api/firebase';
+import { moneybooRef } from '@/api/firestore';
 
 export default {
   data() {

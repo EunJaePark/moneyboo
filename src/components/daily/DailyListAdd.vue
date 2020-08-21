@@ -64,7 +64,7 @@
 import DatePicker from 'v-calendar/lib/components/date-picker.umd';
 import { makeID, newConversionMonth } from '@/utils/filters.js';
 import { eventBus } from '@/main.js';
-import { moneybooRef } from '@/api/firebase';
+import { moneybooRef } from '@/api/firestore';
 import firebase from 'firebase';
 
 export default {

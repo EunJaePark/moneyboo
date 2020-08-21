@@ -1,4 +1,7 @@
 /*------ Registration--------------------------------------------------------*/
+.registration-page-wrap {
+    /* background-color: gray */
+}
 .registration-page-wrap > .regist-form {
     float: left;
     width:100%;
@@ -43,8 +46,29 @@
     border-color: #187b55;
     border-color:#3f9c79;
     border-color:#52927a;
-
 }
+
+.registration-page-wrap > .regist-form > .regist-form-cont > form > div > .logmessage-box{
+    position: absolute;
+    right: 0;
+    top: 5px;
+    padding: 0 15px;
+}
+.registration-page-wrap > .regist-form > .regist-form-cont > form > div > .logmessage-box > p {
+    color: gray;
+    font-size: 1.2em;
+    font-weight: bold;
+}
+/* .logmessages-box > button {
+    border: transparent;
+    color: #fff;
+    padding: 10px;
+    background-color:#348F6C;
+    margin-bottom: 5px;
+    
+} */
+
+
 .registration-page-wrap > .regist-form > .regist-form-cont > form > p {
     font-weight:600;
     opacity: 0.5;
@@ -60,7 +84,6 @@
     position: relative;
 }
 .registration-page-wrap > .regist-form > .regist-form-cont > form > .add-btn {
-    background-color: unset;
     border: transparent;
     background-size:cover;
     position: absolute;
@@ -85,6 +108,20 @@
 .registration-page-wrap > .regist-form > .regist-form-cont > form > .add-btn.active{
     opacity: 1;
 }
+.registration-page-wrap > .regist-form > .regist-form-cont > .warning {
+    font-weight: bold;
+    position: absolute;
+    bottom: -40px;
+    left: 13px;
+    color: red;
+    font-size: 1.3em;
+}
+.registration-page-wrap > .login-form > .regist-form-cont > .warning{
+    right: 130px;
+    left: unset;
+} 
+
+
 .registration-page-wrap > .regist-form > .regist-form-cont > .reset-btn{
     position: absolute;
     font-size: 0;
@@ -172,4 +209,8 @@
         opacity:1;
     }
 }
+
+
+
+
 
