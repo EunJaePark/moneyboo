@@ -53,7 +53,7 @@
 .daily-list-add .add-cont > button.inputOn {
   color: #348f6c;
 }
-.daily-list-add div {
+.daily-list-add > form >  div {
   position: relative;
   text-align: center;
   padding-top: 10px;
