@@ -1,7 +1,6 @@
 <template>
   <div class="daily-list-add">
     <form class="add-cont" @submit.prevent="submitList">
-      <!-- {{ date }} -->
       <button
         type="button"
         v-on:click="clickIncomeBtn()"
@@ -63,10 +62,9 @@
 
 <script>
 import DatePicker from 'v-calendar/lib/components/date-picker.umd';
-// import DatePicker from '@/js/v-calendar.js';
-import { makeID } from '@/utils/filters.js';
+import { makeID, newConversionMonth } from '@/utils/filters.js';
 import { eventBus } from '@/main.js';
-import { moneybooRef } from '@/api/firestore';
+import { moneybooRef } from '@/api/firebase';
 import firebase from 'firebase';
 
 export default {
@@ -74,10 +72,12 @@ export default {
   created() {
     eventBus.$on('editList', data => {
       // 리스트에서 edit 버튼을 누른다면,
-      console.log(data);
-      let dd = new Date();
-      // 데이터는 연결이 잘 되는데, 달력에 연결이 안된다...
-      this.date = dd.toString();
+
+      // 수정 해야 할 원본 배열 editList 에 할당
+      this.editList = data;
+
+      // 각 v-model에 연결
+      this.date = new Date(`2020 ${data.date}`);
       this.price = data.price;
       this.inputControl = data.item;
       this.selectCategory = data.category;
@@ -87,7 +87,7 @@ export default {
       this.listText = data.text;
     });
     // 셋팅페이지에 있는 데이터 불러오기
-    this.getSettingData();
+    this.getSettingData();    
   },
   data() {
     return {
@@ -102,6 +102,7 @@ export default {
       currentUid: this.$store.state.uid,
       getCategory: [],
       getBankAsset: [],
+      editList: {},
     };
   },
   methods: {
@@ -162,7 +163,6 @@ export default {
       return moneybooRef(this.currentUid);
     },
     dailyListAddRef() {
-      // 😆😆변경함
       return this.mbooRef()
         .doc('daily')
         .collection('listAdd');
@@ -224,29 +224,36 @@ export default {
       }
 
       // firestore에 listData 저장
-      const thisMonth = this.conversionMonth(this.date);
-      this.dailyListAddRef()
-        .doc(thisMonth)
-        .get()
-        .then(docSnapshot => {
-          // 만약 document값이 없으면 초기값 셋팅해주고
-          if (!docSnapshot.exists) {
-            this.dailyListAddRef()
-              .doc(thisMonth)
-              .set({ listData: [listData] });
+      const yearsMonth = newConversionMonth();
 
-            // 만약 값이 있다면 배열을 업데이트 해줄것
-          } else {
-            this.dailyListAddRef()
-              .doc(thisMonth)
-              .update({
-                listData: firebase.firestore.FieldValue.arrayUnion(listData),
-              });
-          }
-        })
-        .catch(err => {
-          console.log('listAdd submitList 부분 에러 발생', err);
-        });
+      if (this.edit === true) {
+        // 수정했을때 수정후 저장 함수 실행
+        this.submitEditList(listData);
+      } else {
+        this.dailyListAddRef()
+          .doc(yearsMonth)
+          .get()
+          .then(docSnapshot => {
+            // 만약 document값이 없으면 초기값 셋팅해주고
+            if (!docSnapshot.exists) {
+              this.dailyListAddRef()
+                .doc(yearsMonth)
+                .set({ listData: [listData] });
+
+              // 만약 값이 있다면 배열을 업데이트 해줄것
+            } else {
+              this.dailyListAddRef()
+                .doc(yearsMonth)
+                .update({
+                  listData: firebase.firestore.FieldValue.arrayUnion(listData),
+                });
+            }
+          })
+          .catch(err => {
+            console.log('listAdd submitList 부분 에러 발생', err);
+          });
+      }
+
       this.resetData(); // 인풋창의 데이터를 리셋해주는 함수
     },
     resetData() {
@@ -266,16 +273,24 @@ export default {
       return `${month + 1}.${todayDate}`;
       // 출력 형식 : 7.17
     },
-    conversionMonth(date) {
-      const years = String(date.getFullYear()).substr(2, 2);
-      const month =
-        date.getMonth() < 10 ? `0${date.getMonth() + 1}` : date.getMonth() + 1;
+    submitEditList(listData) {
+      const yearsMonth = newConversionMonth();
 
-      return `${years}.${month}`;
+      // 기존의 배열 삭제
+      this.dailyListAddRef()
+        .doc(yearsMonth)
+        .update({
+          listData: firebase.firestore.FieldValue.arrayRemove(this.editList),
+        });
+      // 수정된 배열 추가
+      this.dailyListAddRef()
+        .doc(yearsMonth)
+        .update({
+          listData: firebase.firestore.FieldValue.arrayUnion(listData),
+        });
     },
   },
 };
-// 1. 인풋창 숫자가 아닐때 처리해주기
 </script>
 
 <style></style>

@@ -33,7 +33,7 @@
                 href="#/daily"
                 title="수정하기"
                 class="list-income"
-                @click.prevent="editList(list)"
+                @click.prevent="clickeEditList(list)"
                 >+ {{ editCommaPrice(list.price) }} 원</a
               ></b
             >
@@ -42,7 +42,7 @@
                 href="#/daily"
                 title="수정하기"
                 class="list-expend"
-                @click.prevent="editList(list)"
+                @click.prevent="clickeEditList(list)"
               >
                 - {{ editCommaPrice(list.price) }} 원</a
               >
@@ -61,13 +61,10 @@
 </template>
 
 <script>
-// import { getListData } from '@/utils/daily.js';
-// import { deleteListCookie } from '@/utils/cookies';
-// import { addComma } from '@/utils/filters';
 import { addComma, newConversionMonth } from '@/utils/filters';
 import { eventBus } from '@/main';
-// import firebase from 'firebase';
-import { moneybooRef } from '@/api/firestore';
+import firebase from 'firebase';
+import { moneybooRef } from '@/api/firebase';
 
 export default {
   created() {
@@ -78,12 +75,10 @@ export default {
     return {
       listDateArray: [],
       currentUid: this.$store.state.uid, // 현재 로그인한 유저 uid
-      // 왜 새로고침을 해야 반영이 될까? ( 쿠키에 저장하기만하고 스토어에 저장 안할때)
       getAllListData: [],
       listArrLength: 0,
       logMessage: '',
       getCategory: [],
-      cccopyArray: [],
     };
   },
   methods: {
@@ -189,11 +184,9 @@ export default {
       return addComma(totalPrice);
     },
     // 수정버튼 눌렀을때의 함수
-    editList(data) {
-      console.log('수정해야할 리스트');
-      console.log(data);
+    clickeEditList(data) {
+      console.log('수정해야할 리스트', data);
       eventBus.editList(data);
-      // deleteCookie(data);
     },
     editCommaPrice(price) {
       return addComma(price);
@@ -214,49 +207,11 @@ export default {
     // 삭제버튼을 눌렀을때의 함수
     deleteListData(list) {
       const yearsMonth = newConversionMonth();
-      const deleteId = list.id;
-
-      // 해당 월의 배열을 불러온다.
       this.dailyListAddRef()
         .doc(yearsMonth)
-        .get()
-        .then(doc => {
-          let copyArray = doc.data().listData;
-          // 삭제 버튼을 눌렀을때와 동일한 아이디 값을 가진애만 제거한다
-          for (let i = 0; i < copyArray.length; i++) {
-            if (copyArray[i].id == deleteId) {
-              copyArray.splice(i, 1);
-            }
-          }
-          // listData를 삭제한다.
-          this.dailyListAddRef()
-            .doc(yearsMonth)
-            .delete()
-            .then(function() {
-              console.log('Document successfully deleted!');
-            })
-            .catch(function(error) {
-              console.error('Error removing document: ', error);
-            });
-
-          // 위에서 값을 제거한 배열을 다시 firebase에 저장해준다.
-          this.dailyListAddRef()
-            .doc(yearsMonth)
-            .get()
-            .then(docSnapshot => {
-              // 만약 document값이 없으면 초기값 셋팅해주고
-              console.log(docSnapshot);
-              this.dailyListAddRef()
-                .doc(yearsMonth)
-                .set({ listData: copyArray });
-            })
-            .catch(err => {
-              console.log('listAdd submitList 부분 에러 발생', err);
-            });
+        .update({
+          listData: firebase.firestore.FieldValue.arrayRemove(list),
         });
-
-      // 🦊삭제할 값만 제외해서 배열에 담은뒤, 리스트를 삭제하고 다시 저장해주는 방법..
-      // 번거롭긴 한데.. 다른 방법은 없을까 ..!?
     },
     // date 에 맞는 list 만 불러오는 함수
     checkMatchDateList(date) {
@@ -272,10 +227,8 @@ export default {
     // 월 만 추가해주고 리턴하는 함수
     addMonth() {
       const month = new Date().getMonth() + 1;
-
       return month;
     },
-    // 😆😆변경함
     conversionMonth(date) {
       const years = String(date.getFullYear()).substr(2, 2);
       const month =
